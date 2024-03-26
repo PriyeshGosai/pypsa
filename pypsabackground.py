@@ -18,6 +18,7 @@ if 'COLAB_GPU' in os.environ:
     os.system('pip install -q pyomo')
     os.system('apt-get install -y -qq glpk-utils')
     os.system('pip install highspy')
+    os.system('pip install --upgrade gdown')
     from google.colab import drive
     from google.colab import output
 else:
