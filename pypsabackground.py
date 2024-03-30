@@ -285,7 +285,7 @@ def view_network(df):
   from IPython.display import display, clear_output
 
   # get the names of all components in the network
-  components = ['buses','generators','carriers','links','lines','loads','loads_t','generators_t.p_max_pu','snapshots','snapshot_weightings','investment_periods','investment_period_weightings']
+  components = ['buses','generators','carriers','links','lines','loads','stores','snapshots']
 
   # create dropdown
   dropdown = widgets.Dropdown(
