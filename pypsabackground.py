@@ -444,4 +444,24 @@ def savenetwork(df):
 
   # Display everything
   display(filename_input, download_button)
+# Function to set e_min_pu to zero for all stores in a network
+def set_stores_e_min_pu_to_zero(network):
+    # Check if e_min_pu column exists, and if not, create it
+    if 'e_min_pu' not in network.stores_t:
+        network.stores_t['e_min_pu'] = pd.DataFrame(0, index=network.snapshots, columns=network.stores.index)
+    else:
+        # If it exists, set all values to zero
+        network.stores_t.e_min_pu.loc[:, :] = 0
+
+# Function to update the last timestep of e_min_pu from 'data' DataFrame
+def update_last_timestep_e_min_pu(network, data):
+    last_snapshot = network.snapshots[-1]  # Get the last snapshot of the network
+    
+    # Iterate over all stores in the network
+    for store_name in network.stores.index:
+        if store_name in data.index:  # If the store exists in 'data' DataFrame
+            # Update the last timestep of e_min_pu for the store
+            network.stores_t.e_min_pu.at[last_snapshot, store_name] = data[store_name]
+        else:
+            print(f"Warning: {store_name} not found in 'data' DataFrame")
 
