@@ -1,6 +1,6 @@
 # Toolbox for running and interacting with PyPSA using Google Colab.
 # Developed by Priyesh Gosai - priyesh.gosai@gmail.com
-# Version 2 26 February 2024
+# Version 2 31 March 2024
 
 import os
 import pandas as pd
@@ -40,7 +40,9 @@ def convert_excel_to_csv(excel_file_path, csv_folder_path):
     List[str]: Paths to the successfully created CSV files.
     """
     logging.basicConfig(level=logging.INFO)
-    components = ['stores', 'generators', 'buses', 'carriers', 'generators-p_set', 'links', 'loads', 'loads-p_set', 'snapshots','network','stores-e_min_pu']
+    components = ['stores', 'generators', 'buses', 'carriers',
+              'generators-p_set', 'links', 'loads', 'loads-p_set', 
+              'snapshots','network','links-p_max_pu','stores-e_min_pu']
     created_csv_files = []
 
     # Ensure the CSV folder exists
