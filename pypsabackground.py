@@ -249,20 +249,53 @@ def plot_int_stacked(df,height = 600, width = 1000):
   # display the plot
   fig.show()
 
-def interactive_plot(df, height=600, width=1000, y_limits=None,title = None, yaxis_title = None,stacked = False,add_line = False, line_data = None):
+# def interactive_plot(df, height=600, width=1000, y_limits=None,title = None, yaxis_title = None,stacked = False,add_line = False, line_data = None):
+#     import plotly.graph_objects as go
+#     fig = go.Figure(layout=go.Layout(height=height, width=width))
+
+#     # Add traces to the figure object
+#     if stacked == True:
+#         for column in df.columns:
+#             fig.add_trace(go.Scatter(x=df.index, y=df[column], mode='lines', stackgroup='one', fill='tonexty', name=column))
+
+#     if stacked == False:
+#         for column in df.columns:
+#             fig.add_trace(go.Scatter(x=df.index, y=df[column], name=column))
+
+#     if add_line == True:
+#         for column in line_data.columns:
+#             fig.add_trace(go.Scatter(x=line_data.index, y=line_data[column], name=column))
+    
+#     # Customize the plot layout
+#     fig.update_layout(
+#         title=title,
+#         xaxis_title='Time',
+#         yaxis_title=yaxis_title,
+#         autosize=False,
+#         width=width,
+#         height=height,
+#         margin=dict(l=50, r=50, b=100, t=100, pad=4)
+#     )
+#     # Set the y-limits if provided
+#     if y_limits:
+#         fig.update_yaxes(range=y_limits)
+
+#     # Display the plot
+#     fig.show()
+
+def interactive_plot(df, height=600, width=1000, y_limits=None, title=None, yaxis_title=None, stacked=False, add_line=False, line_data=None):
     import plotly.graph_objects as go
     fig = go.Figure(layout=go.Layout(height=height, width=width))
 
     # Add traces to the figure object
-    if stacked == True:
+    if stacked:
         for column in df.columns:
             fig.add_trace(go.Scatter(x=df.index, y=df[column], mode='lines', stackgroup='one', fill='tonexty', name=column))
-
-    if stacked == False:
+    else:
         for column in df.columns:
             fig.add_trace(go.Scatter(x=df.index, y=df[column], name=column))
 
-    if add_line == True:
+    if add_line:
         for column in line_data.columns:
             fig.add_trace(go.Scatter(x=line_data.index, y=line_data[column], name=column))
     
@@ -276,12 +309,14 @@ def interactive_plot(df, height=600, width=1000, y_limits=None,title = None, yax
         height=height,
         margin=dict(l=50, r=50, b=100, t=100, pad=4)
     )
+    
     # Set the y-limits if provided
     if y_limits:
         fig.update_yaxes(range=y_limits)
 
-    # Display the plot
-    fig.show()
+    # Return the figure object
+    return fig
+
 
 # Colab interaction
 
