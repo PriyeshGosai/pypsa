@@ -1,6 +1,6 @@
 # Toolbox for running and interacting with PyPSA using Google Colab.
 # Developed by Priyesh Gosai - priyesh.gosai@gmail.com
-# Version 2 4 April 2024
+# Version 2 1 April 2024
 
 import os
 import pandas as pd
@@ -10,6 +10,9 @@ import ipywidgets as widgets
 from datetime import datetime, timedelta
 import shutil
 import logging
+from concurrent.futures import ThreadPoolExecutor
+
+
 
 # Check if the script is running in Google Colab
 if 'COLAB_GPU' in os.environ:
@@ -24,7 +27,14 @@ if 'COLAB_GPU' in os.environ:
 else:
     print("Not running in Google Colab. Skipping installations.")
 
-# Functions for running PyPSA
+# ***********************************
+
+def convert_sheet_to_csv(xls, sheet_name, csv_folder_path):
+    df = xls.parse(sheet_name)
+    csv_file_path = os.path.join(csv_folder_path, f"{sheet_name}.csv")
+    df.to_csv(csv_file_path, index=False)
+    logging.info(f"Converted {sheet_name} to CSV.")
+    return csv_file_path
 
 def convert_excel_to_csv(excel_file_path, csv_folder_path):
     """
@@ -40,40 +50,101 @@ def convert_excel_to_csv(excel_file_path, csv_folder_path):
     List[str]: Paths to the successfully created CSV files.
     """
     logging.basicConfig(level=logging.INFO)
-    components = ['stores', 'generators', 'buses', 'carriers', 
+    components = {'stores', 'generators', 'buses', 'carriers', 
                   'generators-p_set', 'links', 'loads', 
-                  'loads-p_set', 'snapshots','network',
-                  'links-p_max_pu','stores-e_min_pu', 
-                  'links-p_min_pu','stores-e_max_pu',
+                  'loads-p_set', 'snapshots', 'network',
+                  'links-p_max_pu', 'stores-e_min_pu', 
+                  'links-p_min_pu', 'stores-e_max_pu',
                   'generators-p_max_pu', 'generators-p_min_pu',
-                  'network','storage_units','storage_units-state_of_charge_s']
+                  'network', 'links-p_set'}
     created_csv_files = []
 
     # Ensure the CSV folder exists
-    if not os.path.exists(csv_folder_path):
-        os.makedirs(csv_folder_path)
-    else:
-        # Clear only relevant CSV files in the folder
-        for item in os.listdir(csv_folder_path):
-            if item.endswith(".csv") and item.replace(".csv", "") in components:
-                os.remove(os.path.join(csv_folder_path, item))
+    os.makedirs(csv_folder_path, exist_ok=True)
+
+    # Clear only relevant CSV files in the folder
+    for item in os.listdir(csv_folder_path):
+        if item.endswith(".csv") and item.replace(".csv", "") in components:
+            os.remove(os.path.join(csv_folder_path, item))
 
     try:
         xls = pd.ExcelFile(excel_file_path)
-        for sheet_name in xls.sheet_names:
-            if sheet_name in components:
-                df = xls.parse(sheet_name)
-                csv_file_path = os.path.join(csv_folder_path, f"{sheet_name}.csv")
-                if sheet_name == 'storage_units-state_of_charge_s':csv_file_path = os.path.join(csv_folder_path, f"{'storage_units-state_of_charge_set'}.csv")
-                df.to_csv(csv_file_path, index=False)
-                created_csv_files.append(csv_file_path)
-                logging.info(f"Converted {sheet_name} to CSV.")
+        with ThreadPoolExecutor() as executor:
+            futures = [executor.submit(convert_sheet_to_csv, xls, sheet_name, csv_folder_path)
+                       for sheet_name in xls.sheet_names if sheet_name in components]
+            for future in futures:
+                created_csv_files.append(future.result())
     except Exception as e:
         logging.error(f"Error converting Excel to CSV: {e}")
         return []
+    finally:
+        if xls is not None:
+            xls.close()
+            print('Excel file is closed')
 
     logging.info(f"Conversion complete. CSV files are saved in '{csv_folder_path}'")
-    return csv_folder_path #created_csv_files
+    return csv_folder_path
+
+
+
+
+# ***********************************
+
+
+
+# Functions for running PyPSA
+
+# def convert_excel_to_csv(excel_file_path, csv_folder_path):
+#     """
+#     Converts each sheet in an Excel file to a CSV file, only for sheets whose names are in a predefined list. 
+#     The function checks if the target folder exists, and only specific CSV files related to the Excel file's 
+#     sheets are deleted and recreated.
+
+#     Parameters:
+#     excel_file_path (str): The file path of the Excel file.
+#     csv_folder_path (str): The path to the folder where CSV files will be saved.
+
+#     Returns:
+#     List[str]: Paths to the successfully created CSV files.
+#     """
+#     logging.basicConfig(level=logging.INFO)
+#     components = ['stores', 'generators', 'buses', 'carriers', 
+#                   'generators-p_set', 'links', 'loads', 
+#                   'loads-p_set', 'snapshots','network',
+#                   'links-p_max_pu','stores-e_min_pu', 
+#                   'links-p_min_pu','stores-e_max_pu',
+#                   'generators-p_max_pu', 'generators-p_min_pu',
+#                   'network','links-p_set']
+#     created_csv_files = []
+
+#     # Ensure the CSV folder exists
+#     if not os.path.exists(csv_folder_path):
+#         os.makedirs(csv_folder_path)
+#     else:
+#         # Clear only relevant CSV files in the folder
+#         for item in os.listdir(csv_folder_path):
+#             if item.endswith(".csv") and item.replace(".csv", "") in components:
+#                 os.remove(os.path.join(csv_folder_path, item))
+
+#     try:
+#         xls = pd.ExcelFile(excel_file_path)
+#         for sheet_name in xls.sheet_names:
+#             if sheet_name in components:
+#                 df = xls.parse(sheet_name)
+#                 csv_file_path = os.path.join(csv_folder_path, f"{sheet_name}.csv")
+#                 df.to_csv(csv_file_path, index=False)
+#                 created_csv_files.append(csv_file_path)
+#                 logging.info(f"Converted {sheet_name} to CSV.")
+#     except Exception as e:
+#         logging.error(f"Error converting Excel to CSV: {e}")
+#         return []
+#     finally:
+#         if xls is not None:
+#             xls.close()
+#             print('Excel file is closed')
+
+#     logging.info(f"Conversion complete. CSV files are saved in '{csv_folder_path}'")
+#     return csv_folder_path #created_csv_files
 
 def postprocess_network_results(network):
     # Postprocessing for Generators
@@ -507,3 +578,33 @@ def update_last_timestep_e_min_pu(network, data):
         else:
             print(f"Warning: {store_name} not found in 'data' DataFrame")
 
+def print_time_dict(time_dict):
+    for key in time_dict:
+        value = time_dict[key]
+        if value is not None:
+            rounded_value = round(value[0], 10) if isinstance(value[0], (int, float)) else value[0]
+            print(f'{key}:\t{rounded_value}{value[1]}')
+
+def print_list_in_columns(input_list):
+    # Determine the maximum length of the strings in the input list
+    max_length = max(len(str(item)) for item in input_list)
+    # Add some padding for the index and extra spacing
+    column_width = max_length + 5
+
+    for i in range(0, len(input_list), 3):
+        # Create a chunk of up to 3 items
+        chunk = input_list[i:i+3]
+        # Print each item in the chunk
+        for j, value in enumerate(chunk):
+            index = i + j
+            # Format each item with the calculated column width
+            print(f"{index}: {value:<{column_width}}", end="")
+        print()  # Newline after every chunk
+
+time_dict = {'Optimiser Result': [None,''],
+            'Create CSV Folder': [None,' seconds'], 
+             'Import PyPSA Network':[None,' seconds'],
+             'Solve PyPSA Network':[None,' seconds'],
+             'Post Processing':[None,' seconds'],
+             'Total admin time':[None,' seconds'],
+             'Total Elapsed Time':[None,' seconds']}
