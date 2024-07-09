@@ -17,10 +17,9 @@ from concurrent.futures import ThreadPoolExecutor
 # Check if the script is running in Google Colab
 if 'COLAB_GPU' in os.environ:
     # Environment-specific installation commands
+    os.system('pip install highspy')
     os.system('pip install pypsa')
     os.system('pip install -q pyomo')
-    os.system('apt-get install -y -qq glpk-utils')
-    os.system('pip install highspy')
     os.system('pip install --upgrade gdown')
     from google.colab import drive
     from google.colab import output
