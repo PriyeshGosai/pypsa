@@ -13,21 +13,6 @@ import logging
 from concurrent.futures import ThreadPoolExecutor
 
 
-
-# Check if the script is running in Google Colab
-if 'COLAB_GPU' in os.environ:
-    # Environment-specific installation commands
-    os.system('pip install highspy')
-    os.system('pip install pypsa')
-    os.system('pip install -q pyomo')
-    os.system('pip install --upgrade gdown')
-    from google.colab import drive
-    from google.colab import output
-else:
-    print("Not running in Google Colab. Skipping installations.")
-
-# ***********************************
-
 def convert_sheet_to_csv(xls, sheet_name, csv_folder_path):
     df = xls.parse(sheet_name)
     csv_file_path = os.path.join(csv_folder_path, f"{sheet_name}.csv")
@@ -55,7 +40,7 @@ def convert_excel_to_csv(excel_file_path, csv_folder_path):
                   'links-p_max_pu', 'stores-e_min_pu', 
                   'links-p_min_pu', 'stores-e_max_pu',
                   'generators-p_max_pu', 'generators-p_min_pu',
-                  'network', 'links-p_set'}
+                  'network', 'links-p_set','storage_units'}
     created_csv_files = []
 
     # Ensure the CSV folder exists
@@ -84,67 +69,7 @@ def convert_excel_to_csv(excel_file_path, csv_folder_path):
     logging.info(f"Conversion complete. CSV files are saved in '{csv_folder_path}'")
     return csv_folder_path
 
-
-
-
 # ***********************************
-
-
-
-# Functions for running PyPSA
-
-# def convert_excel_to_csv(excel_file_path, csv_folder_path):
-#     """
-#     Converts each sheet in an Excel file to a CSV file, only for sheets whose names are in a predefined list. 
-#     The function checks if the target folder exists, and only specific CSV files related to the Excel file's 
-#     sheets are deleted and recreated.
-
-#     Parameters:
-#     excel_file_path (str): The file path of the Excel file.
-#     csv_folder_path (str): The path to the folder where CSV files will be saved.
-
-#     Returns:
-#     List[str]: Paths to the successfully created CSV files.
-#     """
-#     logging.basicConfig(level=logging.INFO)
-#     components = ['stores', 'generators', 'buses', 'carriers', 
-#                   'generators-p_set', 'links', 'loads', 
-#                   'loads-p_set', 'snapshots','network',
-#                   'links-p_max_pu','stores-e_min_pu', 
-#                   'links-p_min_pu','stores-e_max_pu',
-#                   'generators-p_max_pu', 'generators-p_min_pu',
-#                   'network','links-p_set']
-#     created_csv_files = []
-
-#     # Ensure the CSV folder exists
-#     if not os.path.exists(csv_folder_path):
-#         os.makedirs(csv_folder_path)
-#     else:
-#         # Clear only relevant CSV files in the folder
-#         for item in os.listdir(csv_folder_path):
-#             if item.endswith(".csv") and item.replace(".csv", "") in components:
-#                 os.remove(os.path.join(csv_folder_path, item))
-
-#     try:
-#         xls = pd.ExcelFile(excel_file_path)
-#         for sheet_name in xls.sheet_names:
-#             if sheet_name in components:
-#                 df = xls.parse(sheet_name)
-#                 csv_file_path = os.path.join(csv_folder_path, f"{sheet_name}.csv")
-#                 df.to_csv(csv_file_path, index=False)
-#                 created_csv_files.append(csv_file_path)
-#                 logging.info(f"Converted {sheet_name} to CSV.")
-#     except Exception as e:
-#         logging.error(f"Error converting Excel to CSV: {e}")
-#         return []
-#     finally:
-#         if xls is not None:
-#             xls.close()
-#             print('Excel file is closed')
-
-#     logging.info(f"Conversion complete. CSV files are saved in '{csv_folder_path}'")
-#     return csv_folder_path #created_csv_files
-
 def postprocess_network_results(network):
     # Postprocessing for Generators
     GeneratorList = [idx for idx in network.generators.index if idx.startswith("Gen-")] + \
@@ -233,69 +158,6 @@ def calculate_end_date(start_date_str, days=7):
     # Convert the end date back to a string in 'YYYY-MM-DD HH:MM' format
     return end_date.strftime('%Y-%m-%d %H:%M')
 
-# Example usage:
-# print(calculate_end_date("2024-03-25", 10))  # Input without time
-# print(calculate_end_date("2024-03-25 14:30", 10))  # Input with time
-
-
-
-# from datetime import datetime, timedelta
-
-# def calculate_end_date(start_date_str, days=7):
-#     """
-#     Calculate the end date given a start date and the number of days to add.
-    
-#     This version of the function aims to be region-independent by treating dates as timezone-naive.
-    
-#     Parameters:
-#     - start_date_str (str): The start date in 'YYYY-MM-DD' or 'YYYY-MM-DD HH:MM:SS' format.
-#     - days (int): The number of days to add to the start date.
-    
-#     Returns:
-#     - str: The end date in 'YYYY-MM-DD' format.
-#     """
-#     # Attempt to parse the start date string with time information
-#     try:
-#         start_date = datetime.strptime(start_date_str, '%Y-%m-%d %H:%M:%S')
-#     except ValueError:
-#         # If it fails, assume the string is in 'YYYY-MM-DD' format
-#         start_date = datetime.strptime(start_date_str, '%Y-%m-%d')
-    
-#     # Calculate the end date by adding the specified number of days
-#     end_date = start_date + timedelta(days=days)
-    
-#     # Convert the end date back to a string in 'YYYY-MM-DD' format
-#     return end_date.strftime('%Y-%m-%d')
-
-
-
-# def calculate_end_date(start_date_str, days=7):
-#     """
-#     Calculate the end date given a start date and the number of days to add.
-    
-#     This version of the function can handle start dates with or without time information.
-    
-#     Parameters:
-#     - start_date_str (str): The start date in 'YYYY-MM-DD' or 'YYYY-MM-DD HH:MM:SS' format.
-#     - days (int): The number of days to add to the start date.
-    
-#     Returns:
-#     - str: The end date in 'YYYY-MM-DD' format.
-#     """
-#     # Attempt to parse the start date string with time information
-#     try:
-#         start_date = datetime.strptime(start_date_str, '%Y-%m-%d %H:%M:%S')
-#     except ValueError:
-#         # If it fails, assume the string is in 'YYYY-MM-DD' format
-#         start_date = datetime.strptime(start_date_str, '%Y-%m-%d')
-    
-#     # Calculate the end date by adding the specified number of days to the start date
-#     end_date = start_date + timedelta(days=days)
-    
-#     # Convert the end date back to a string in 'YYYY-MM-DD' format
-#     return end_date.strftime('%Y-%m-%d')
-# ---------------------------------------------------------------------------------------------------
-# Plotting functions
 
 def plot_int_stacked(df,height = 600, width = 1000):
   import plotly.graph_objects as go
@@ -319,40 +181,6 @@ def plot_int_stacked(df,height = 600, width = 1000):
 
   # display the plot
   fig.show()
-
-# def interactive_plot(df, height=600, width=1000, y_limits=None,title = None, yaxis_title = None,stacked = False,add_line = False, line_data = None):
-#     import plotly.graph_objects as go
-#     fig = go.Figure(layout=go.Layout(height=height, width=width))
-
-#     # Add traces to the figure object
-#     if stacked == True:
-#         for column in df.columns:
-#             fig.add_trace(go.Scatter(x=df.index, y=df[column], mode='lines', stackgroup='one', fill='tonexty', name=column))
-
-#     if stacked == False:
-#         for column in df.columns:
-#             fig.add_trace(go.Scatter(x=df.index, y=df[column], name=column))
-
-#     if add_line == True:
-#         for column in line_data.columns:
-#             fig.add_trace(go.Scatter(x=line_data.index, y=line_data[column], name=column))
-    
-#     # Customize the plot layout
-#     fig.update_layout(
-#         title=title,
-#         xaxis_title='Time',
-#         yaxis_title=yaxis_title,
-#         autosize=False,
-#         width=width,
-#         height=height,
-#         margin=dict(l=50, r=50, b=100, t=100, pad=4)
-#     )
-#     # Set the y-limits if provided
-#     if y_limits:
-#         fig.update_yaxes(range=y_limits)
-
-#     # Display the plot
-#     fig.show()
 
 def interactive_plot(df, height=600, width=1000, y_limits=None, title=None, yaxis_title=None, stacked=False, add_line=False, line_data=None):
     import plotly.graph_objects as go
