@@ -127,7 +127,9 @@ def view_network(df):
   from IPython.display import display, clear_output
 
   # get the names of all components in the network
-  components = ['buses','generators','carriers','links','lines','loads','stores','snapshots']
+  components = ['buses','carriers','generators','line_types',
+                'lines','links','loads','shapes','shunt_impedances','storage_units',
+                'stores','sub_networks','transformer_types','transformers']
 
   # create dropdown
   dropdown = widgets.Dropdown(
@@ -206,8 +208,9 @@ def update_component(df):
     from math import ceil
 
     # get the names of all components in the network
-    components = ['buses','generators','carriers','links','lines','loads','loads_t','stores',
-                  'generators_t','snapshots','snapshot_weightings','investment_periods','investment_period_weightings']
+    components = ['buses','carriers','generators','line_types',
+                    'lines','links','loads','shapes','shunt_impedances','storage_units',
+                    'stores','sub_networks','transformer_types','transformers']
 
     # create dropdown
     dropdown = widgets.Dropdown(
